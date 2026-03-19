@@ -23,6 +23,8 @@ RUN mkdir /CLIProxyAPI
 COPY --from=builder ./app/CLIProxyAPI /CLIProxyAPI/CLIProxyAPI
 
 COPY config.example.yaml /CLIProxyAPI/config.example.yaml
+COPY railway-start.sh /CLIProxyAPI/railway-start.sh
+RUN sed -i 's/\r$//' /CLIProxyAPI/railway-start.sh && chmod +x /CLIProxyAPI/railway-start.sh
 
 WORKDIR /CLIProxyAPI
 
