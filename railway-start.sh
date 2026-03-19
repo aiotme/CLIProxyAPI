@@ -12,6 +12,10 @@ api-keys:
 remote-management:
   allow-remote: true
   secret-key: "${MGMT_SECRET}"
+debug: true
+commercial-mode: true
+logging-to-file: true
+usage-statistics-enabled: true
 nonstream-keepalive-interval: 15
 EOF
 
