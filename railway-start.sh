@@ -27,9 +27,27 @@ case "${TUNNEL_MODE}" in
 esac
 
 if [ "${TUNNEL_MODE}" != "off" ]; then
-  if ! command -v cloudflared >/dev/null 2>&1; then
-    echo "cloudflared is not installed in the container image" >&2
-    exit 1
+  CLOUDFLARED_BIN=""
+  if command -v cloudflared >/dev/null 2>&1; then
+    CLOUDFLARED_BIN="$(command -v cloudflared)"
+  else
+    ARCH="$(uname -m)"
+    case "${ARCH}" in
+      x86_64|amd64)
+        CF_ARCH="amd64"
+        ;;
+      aarch64|arm64)
+        CF_ARCH="arm64"
+        ;;
+      *)
+        echo "Unsupported architecture for cloudflared: ${ARCH}" >&2
+        exit 1
+        ;;
+    esac
+
+    CLOUDFLARED_BIN="$(mktemp /tmp/cloudflared.XXXXXX)"
+    wget -q -O "${CLOUDFLARED_BIN}" "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${CF_ARCH}"
+    chmod 700 "${CLOUDFLARED_BIN}"
   fi
 
   if [ "${TUNNEL_MODE}" = "token" ]; then
@@ -38,10 +56,10 @@ if [ "${TUNNEL_MODE}" != "off" ]; then
       exit 1
     fi
     echo "Starting Cloudflare named tunnel..."
-    cloudflared tunnel --no-autoupdate run --token "${TUNNEL_TOKEN}" &
+    "${CLOUDFLARED_BIN}" tunnel --no-autoupdate run --token "${TUNNEL_TOKEN}" &
   else
     echo "Starting Cloudflare Quick Tunnel..."
-    cloudflared tunnel --no-autoupdate --url "http://127.0.0.1:8317" &
+    "${CLOUDFLARED_BIN}" tunnel --no-autoupdate --url "http://127.0.0.1:8317" &
   fi
 fi
 
