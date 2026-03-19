@@ -10,7 +10,7 @@ tls:
 api-keys:
   - "${API_KEY}"
 remote-management:
-  allow-remote: false
+  allow-remote: true
   secret-key: "${MGMT_SECRET}"
 nonstream-keepalive-interval: 15
 EOF
