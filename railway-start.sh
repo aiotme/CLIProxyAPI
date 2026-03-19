@@ -58,8 +58,23 @@ if [ "${TUNNEL_MODE}" != "off" ]; then
     echo "Starting Cloudflare named tunnel..."
     "${CLOUDFLARED_BIN}" tunnel --no-autoupdate run --token "${TUNNEL_TOKEN}" &
   else
-    echo "Starting Cloudflare Quick Tunnel..."
-    "${CLOUDFLARED_BIN}" tunnel --no-autoupdate --url "http://127.0.0.1:8317" &
+    RETRY_SECONDS="${CF_QUICK_TUNNEL_RETRY_SECONDS:-5}"
+    case "${RETRY_SECONDS}" in
+      ''|*[!0-9]*)
+        RETRY_SECONDS="5"
+        ;;
+    esac
+
+    (
+      while true; do
+        echo "Starting Cloudflare Quick Tunnel..."
+        if "${CLOUDFLARED_BIN}" tunnel --no-autoupdate --url "http://127.0.0.1:8317"; then
+          exit 0
+        fi
+        echo "Quick Tunnel exited, retrying in ${RETRY_SECONDS}s..." >&2
+        sleep "${RETRY_SECONDS}"
+      done
+    ) &
   fi
 fi
 
